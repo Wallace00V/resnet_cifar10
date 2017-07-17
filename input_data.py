@@ -2,10 +2,24 @@
 """
 Created on Fri Jul 14 15:31:51 2017
 
+0:airplane
+1:automobile
+2:bird
+3:cat
+4:deer
+5:dog
+6:frog
+7:horse
+8:ship
+9:truck
+
+
 @author: zwcong2
 """
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
+
 
 def unpickle(file):
     fo = open(file, 'rb')
@@ -43,56 +57,73 @@ def load_data():
     y = list(map(one_hot_vec,y))
     y=np.concatenate(y)
     y=y.reshape((np.int(y.shape[0]/10),10))
-    X_train = x[0:50000,:,:,:]
-    Y_train = y[0:50000]
-    X_test = x[50000:,:,:,:]
-    Y_test = y[50000:]
+    X_train = x[0:10000,:,:,:]
+    Y_train = y[0:10000]
+    X_test = x[50000:55000,:,:,:]
+    Y_test = y[50000:55000]
     
-    return (X_train, Y_train, X_test, Y_test)
+    return X_train, Y_train, X_test, Y_test
 
 
-
-
-
-
-class Dataset:
-    def __init__(self,data):    
+class DataSet:
+    def __init__(self,images,labels):
         self._index_in_epoch = 0
         self._epochs_completed = 0
-        self._data = data
-        self._num_examples = data.shape[0]
+        self._images = images
+        self._labels = labels
+        self._num_examples = images.shape[0]
         pass
     @property
-    def data(self):
-        return self._data
+    def images(self):
+        return self._images
+    @property
+    def labels(self):
+        return self._labels
 
     def next_batch(self,batch_size,shuffle = True):
         start = self._index_in_epoch
         if start == 0 and self._epochs_completed == 0:
             idx = np.arange(0, self._num_examples)  # get all possible indexes
             np.random.shuffle(idx)  # shuffle indexe
-            self._data = self.data[idx]  # get list of `num` random samples
-
+            self._images = self.images[idx]
+            self._labels = self.labels[idx]
         # go to the next batch
         if start + batch_size > self._num_examples:
             self._epochs_completed += 1
             rest_num_examples = self._num_examples - start
-            data_rest_part = self.data[start:self._num_examples]
+            images_rest_part = self.images[start:self._num_examples]
+            labels_rest_part = self.labels[start:self._num_examples]
             idx0 = np.arange(0, self._num_examples)  # get all possible indexes
             np.random.shuffle(idx0)  # shuffle indexes
-            self._data = self.data[idx0]  # get list of `num` random samples
-
+            self._images = self.images[idx0]
+            self._labels = self.labels[idx0]
             start = 0
             self._index_in_epoch = batch_size - rest_num_examples #avoid the case where the #sample != integar times of batch_size
             end =  self._index_in_epoch  
-            data_new_part =  self._data[start:end]  
-            return np.concatenate((data_rest_part, data_new_part), axis=0)
+            images_new_part =  self._images[start:end]
+            labels_new_part = self._labels[start:end]
+            return np.concatenate((images_rest_part, images_new_part), axis=0),np.concatenate((labels_rest_part, labels_new_part), axis=0)
         else:
             self._index_in_epoch += batch_size
             end = self._index_in_epoch
-            return self._data[start:end]
-
+            return self._images[start:end],self._labels[start:end]
+   
+        
 
 if __name__=='__main__':
-    Ytr = Dataset(np.random.rand(10,10))
+    X_train, Y_train, X_test, Y_test = load_data()
+    im,la = DataSet(X_train,Y_train).next_batch(128)
+    f, a = plt.subplots(2, 10, figsize=(12, 3))
+    for i in range(10):
+        a[0][i].imshow(im[i, :, :, :])
+        a[1][i].imshow(im[i + 10, :, :, :])
 
+    # f.show()
+    plt.draw()
+    
+    
+    
+    
+    
+    
+    
